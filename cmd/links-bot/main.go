@@ -2,13 +2,18 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
+
+	"github.com/cmczk/links-bot/clients/telegram"
+)
+
+const (
+	tgBotHost = "api.telegram.org"
 )
 
 func main() {
-	t := mustToken()
-	fmt.Println(t)
+	tgClient := telegram.New(tgBotHost, mustToken())
+	_ = tgClient
 }
 
 func mustToken() string {
