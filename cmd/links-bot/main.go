@@ -4,16 +4,29 @@ import (
 	"flag"
 	"log"
 
-	"github.com/cmczk/links-bot/clients/telegram"
+	tgClient "github.com/cmczk/links-bot/clients/telegram"
+	event_consumer "github.com/cmczk/links-bot/consumer/event-consumer"
+	"github.com/cmczk/links-bot/events/telegram"
+	"github.com/cmczk/links-bot/storage/files"
 )
 
 const (
-	tgBotHost = "api.telegram.org"
+	tgBotHost   = "api.telegram.org"
+	storagePath = "storage"
+	batchSize   = 100
 )
 
 func main() {
-	tgClient := telegram.New(tgBotHost, mustToken())
-	_ = tgClient
+	tgClient := tgClient.New(tgBotHost, mustToken())
+	eventsProcessor := telegram.New(tgClient, files.New(storagePath))
+
+	log.Println("service started")
+
+	consumer := event_consumer.New(eventsProcessor, eventsProcessor, batchSize)
+
+	if err := consumer.Start(); err != nil {
+		log.Fatalf("service stopped: %s", err.Error())
+	}
 }
 
 func mustToken() string {
