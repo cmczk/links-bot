@@ -1,10 +1,17 @@
 package telegram
 
 import (
+	"errors"
+
 	"github.com/cmczk/links-bot/clients/telegram"
 	"github.com/cmczk/links-bot/events"
 	"github.com/cmczk/links-bot/lib/e"
 	"github.com/cmczk/links-bot/storage"
+)
+
+var (
+	ErrUnknownEventType = errors.New("unknown event type")
+	ErrUnknownMetaType  = errors.New("unknown meta type")
 )
 
 type Processor struct {
@@ -62,6 +69,37 @@ func event(upd telegram.Update) events.Event {
 	}
 
 	return res
+}
+
+func (p *Processor) Process(event events.Event) error {
+	switch event.Type {
+	case events.Message:
+		return p.processMessage(event)
+	default:
+		return e.Wrap("can't process message", ErrUnknownEventType)
+	}
+}
+
+func (p *Processor) processMessage(event events.Event) error {
+	meta, err := meta(event)
+	if err != nil {
+		return e.Wrap("can't process message", err)
+	}
+
+	if err := p.doCmd(event.Text, meta.ChatID, meta.Username); err != nil {
+		return e.Wrap("can't process message", err)
+	}
+
+	return nil
+}
+
+func meta(event events.Event) (Meta, error) {
+	res, ok := event.Meta.(Meta)
+	if !ok {
+		return Meta{}, e.Wrap("can't fetch meta", ErrUnknownMetaType)
+	}
+
+	return res, nil
 }
 
 func fetchType(upd telegram.Update) events.Type {

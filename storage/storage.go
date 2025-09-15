@@ -2,10 +2,15 @@ package storage
 
 import (
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	"io"
 
 	"github.com/cmczk/links-bot/lib/e"
+)
+
+var (
+	ErrNoSavedPages = errors.New("no saved pages")
 )
 
 type Storage interface {
